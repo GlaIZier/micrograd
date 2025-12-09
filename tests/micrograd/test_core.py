@@ -81,9 +81,26 @@ def test_complex():
     grad_f = (-a.v * (b.v ** 3 - c.v * d.v / (e.v + (f.v + eps) ** -2)) - (-a.v * (b.v ** 3 - c.v * d.v / (e.v + f.v ** -2)))) / eps
 
     print(f"grad_a={grad_a}, grad_b={grad_b}, grad_c={grad_c}, grad_d={grad_d}, grad_e={grad_e}, grad_f={grad_f}")
-    assert abs(a.grad - grad_a) < 1e-2
-    assert abs(b.grad - grad_b) < 1e-2
-    assert abs(c.grad - grad_c) < 1e-2
-    assert abs(d.grad - grad_d) < 1e-2
-    assert abs(e.grad - grad_e) < 1e-2
-    assert abs(f.grad - grad_f) < 1e-2
+    assert abs(a.grad - grad_a) < 1e-5
+    assert abs(b.grad - grad_b) < 1e-5
+    assert abs(c.grad - grad_c) < 1e-5
+    assert abs(d.grad - grad_d) < 1e-5
+    assert abs(e.grad - grad_e) < 1e-5
+    assert abs(f.grad - grad_f) < 1e-5
+
+
+def test_relu():
+    a = Scalar(-1)
+    b = Scalar(2)
+
+    z = a.relu() + b.relu()
+    z.backprop()
+    print(f"a={a}, b={b}, z={z}")
+    eps = 1e-10
+
+    grad_a = ((((a.v + eps) if (a.v + eps) > 0 else 0) + (b.v if b.v > 0 else 0)) - ((a.v if a.v > 0 else 0) + (b.v if b.v > 0 else 0))) / eps
+    grad_b = (((a.v if a.v > 0 else 0) + ((b.v + eps) if (b.v + eps) > 0 else 0)) - ((a.v if a.v > 0 else 0) + (b.v if b.v > 0 else 0))) / eps
+    print(f"grad_a={grad_a}, grad_b={grad_b}")
+    assert abs(a.grad - grad_a) < 1e-5
+    assert abs(b.grad - grad_b) < 1e-5
+

@@ -1,3 +1,5 @@
+from random import uniform
+
 
 class Scalar:
 
@@ -33,10 +35,11 @@ class Scalar:
 
     def __pow__(self, o):
         assert not isinstance(o, Scalar)
-        s = Scalar(self.v ** o, children=self.children, op="^")
+        assert isinstance(o, (int, float))
+        s = Scalar(self.v ** o, children=(self,), op="^")
 
         def __back():
-            self.grad += s.grad * o * self.v ** (o - 1)
+            self.grad += s.grad * (o * self.v ** (o - 1))
 
         s.back = __back
         return s
@@ -48,6 +51,7 @@ class Scalar:
     def __sub__(self, o):
         return self + (-o)
 
+    # or:
     # def __sub__(self, o):
     #     s = Scalar(self.v - o.v, children=(self, o), op="-")
     #     def __back():
@@ -55,6 +59,15 @@ class Scalar:
     #         o.grad -= s.grad
     #     s.back = __back
     #     return s
+
+    def relu(self):
+        s = Scalar(0 if self.v < 0 else self.v, children=(self,), op="ReLU")
+
+        def __back():
+            self.grad += s.grad * (1 if s.v > 0 else 0)
+
+        s.back = __back
+        return s
 
     def __truediv__(self, o):
         t = o ** -1
@@ -69,3 +82,29 @@ class Scalar:
             c = children.popleft()
             c.back()
             children.extend(c.children)
+
+
+class Module:
+
+    def zero_grad(self):
+        for p in self.parameters():
+            p.grad = 0
+
+    def parameters(self):
+        return []
+
+class Neuron(Module):
+
+    def __init__(self, n):
+        self.w = [Scalar(uniform(-1, 1)) for _ in range(n)]
+        self.b = Scalar(uniform(-1, 1))
+
+    def parameters(self):
+        return self.w + [self.b]
+
+    def __call__(self, x):
+        act = sum((wi * xi for wi, xi in zip(self.w, x)), self.b)
+        out = act.relu()
+        return out
+
+
