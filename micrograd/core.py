@@ -107,4 +107,28 @@ class Neuron(Module):
         out = act.relu()
         return out
 
+class Layer(Module):
 
+    def __init__(self, n_in, n_out):
+        self.neurons = [Neuron(n_in) for _ in range(n_out)]
+
+    def parameters(self):
+        return [p for n in self.neurons for p in n.parameters()]
+
+    def __call__(self, x):
+        outs = [neuron(x) for neuron in self.neurons]
+        return outs
+
+class MLP(Module):
+
+    def __init__(self, in_size, mid_size, out_size):
+        self.layer_in = Layer(in_size, mid_size)
+        self.layer_out = Layer(mid_size, out_size)
+
+    def parameters(self):
+        return self.layer_in.parameters() + self.layer_out.parameters()
+
+    def __call__(self, x):
+        mid = self.layer_in(x)
+        out = self.layer_out(mid)
+        return out
