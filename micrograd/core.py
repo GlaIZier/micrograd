@@ -73,6 +73,9 @@ class Scalar:
         t = o ** -1
         return self * t
 
+    def __gt__(self, o):
+        return self.v > o.v
+
     def backprop(self):
         from collections import deque
         children = deque()
@@ -95,22 +98,22 @@ class Module:
 
 class Neuron(Module):
 
-    def __init__(self, n):
+    def __init__(self, n, activation=True):
         self.w = [Scalar(uniform(-1, 1)) for _ in range(n)]
         self.b = Scalar(uniform(-1, 1))
+        self.activation = activation
 
     def parameters(self):
         return self.w + [self.b]
 
     def __call__(self, x):
         act = sum((wi * xi for wi, xi in zip(self.w, x)), self.b)
-        out = act.relu()
-        return out
+        return act.relu() if self.activation else act
 
 class Layer(Module):
 
-    def __init__(self, n_in, n_out):
-        self.neurons = [Neuron(n_in) for _ in range(n_out)]
+    def __init__(self, n_in, n_out, *args, **kwargs):
+        self.neurons = [Neuron(n_in, *args, **kwargs) for _ in range(n_out)]
 
     def parameters(self):
         return [p for n in self.neurons for p in n.parameters()]
@@ -123,7 +126,7 @@ class MLP(Module):
 
     def __init__(self, in_size, mid_size, out_size):
         self.layer_in = Layer(in_size, mid_size)
-        self.layer_out = Layer(mid_size, out_size)
+        self.layer_out = Layer(mid_size, out_size, activation=False)
 
     def parameters(self):
         return self.layer_in.parameters() + self.layer_out.parameters()
