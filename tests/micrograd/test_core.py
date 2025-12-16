@@ -104,3 +104,13 @@ def test_relu():
     assert abs(a.grad - grad_a) < 1e-5
     assert abs(b.grad - grad_b) < 1e-5
 
+def test_tanh():
+    a = Scalar(0.5)
+    z = a.tanh()
+    z.backprop()
+    print(f"a={a}, z={z}")
+    eps = 1e-10
+
+    grad_a = ((2.71828 ** (a.v + eps) - 2.71828 ** -(a.v + eps)) / (2.71828 ** (a.v + eps) + 2.71828 ** -(a.v + eps)) - (2.71828 ** a.v - 2.71828 ** -a.v) / (2.71828 ** a.v + 2.71828 ** -a.v)) / eps
+    print(f"grad_a={grad_a}")
+    assert abs(a.grad - grad_a) < 1e-5

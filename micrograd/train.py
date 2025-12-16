@@ -7,7 +7,7 @@ def gen_data(n=128):
     for _ in range(n):
         x1 = random.uniform(-2, 2)
         x2 = random.uniform(-2, 2)
-        y = 1.0 if x1**2 + x2**2 > 2.0 else 0.0
+        y = 1.0 if x1**2 + x2**2 > 2.0 else -1.0
         yield x1, x2, y
 
 def train(mlp, data, epochs=3, lr=0.001):
@@ -36,7 +36,7 @@ def train_batched(mlp, data, epochs=3, lr=0.001):
             loss = (y_pred - y) ** 2
             total_loss += loss.v
             cur_loss += loss
-            if i % 4 == 0:
+            if i % 16 == 0:
                 cur_loss.backprop()
                 for p in mlp.parameters():
                     p.v -= lr * p.grad
@@ -86,7 +86,7 @@ def run():
     print(f"-0.5, -0.5: {mlp([Scalar(-0.5), Scalar(-0.5)])}")
     print(f"-2, -2: {mlp([Scalar(-2), Scalar(-2)])}")
     print(f"-1, 2: {mlp([Scalar(-1), Scalar(2)])}")
-    train_batched(mlp, data, epochs=500, lr=0.01)
+    train_batched(mlp, data, epochs=500, lr=0.001)
     print(f"1, 2: {mlp([Scalar(1.0), Scalar(2.0)])}")
     print(f"0, 0: {mlp([Scalar(0.0), Scalar(0.0)])}")
     print(f"-0.5, -0.5: {mlp([Scalar(-0.5), Scalar(-0.5)])}")

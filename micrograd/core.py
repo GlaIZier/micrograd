@@ -34,7 +34,6 @@ class Scalar:
         return s
 
     def __pow__(self, o):
-        assert not isinstance(o, Scalar)
         assert isinstance(o, (int, float))
         s = Scalar(self.v ** o, children=(self,), op="^")
 
@@ -69,6 +68,16 @@ class Scalar:
         s.back = __back
         return s
 
+    def tanh(self):
+        t = (2.71828 ** self.v - 2.71828 ** -self.v) / (2.71828 ** self.v + 2.71828 ** -self.v)
+        s = Scalar(t, children=(self,), op="tanh")
+
+        def __back():
+            self.grad += s.grad * (1 - t * t)
+
+        s.back = __back
+        return s
+
     def __truediv__(self, o):
         t = o ** -1
         return self * t
@@ -98,7 +107,7 @@ class Module:
 
 class Neuron(Module):
 
-    def __init__(self, n, activation=True):
+    def __init__(self, n, activation="relu"):
         self.w = [Scalar(uniform(-1, 1)) for _ in range(n)]
         self.b = Scalar(uniform(-1, 1))
         self.activation = activation
@@ -108,7 +117,13 @@ class Neuron(Module):
 
     def __call__(self, x):
         act = sum((wi * xi for wi, xi in zip(self.w, x)), self.b)
-        return act.relu() if self.activation else act
+        # if self.activation == "relu":
+        #     return act.relu()
+        # elif self.activation == "tanh":
+        #     return act.tanh()
+        # else:
+        #     return act
+        return act if not self.activation else act.relu() if self.activation == "relu" else act.tanh()
 
 class Layer(Module):
 
@@ -126,7 +141,7 @@ class MLP(Module):
 
     def __init__(self, in_size, mid_size, out_size):
         self.layer_in = Layer(in_size, mid_size)
-        self.layer_out = Layer(mid_size, out_size, activation=False)
+        self.layer_out = Layer(mid_size, out_size, activation="")
 
     def parameters(self):
         return self.layer_in.parameters() + self.layer_out.parameters()
